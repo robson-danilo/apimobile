@@ -81,6 +81,7 @@ class Login_model extends CI_Model
 		$this->db->set('disponibilidade', $dados['opcao']);
 		$this->db->set('valor', $dados['valor']);
 		$this->db->set('cadastrado', $dados['cadastrado']);
+		$this->db->where('id_usuario', $dados['id_usuario']);
 		return $this->db->update('disponibilidade');
 	}
 
