@@ -50,6 +50,14 @@ class Welcome extends CI_Controller {
 	}
 
 	public function inserir($nome,$email,$senha,$numero){
+		$nome = str_replace('%20', ' ', $nome);
+		$nome = str_replace('%C3%A7', 'ç', $nome);
+		$nome = str_replace('%C3%A3', 'ã', $nome);
+		$nome = str_replace('%C3%A9', 'é', $nome);
+		$nome = str_replace('%C3%89', 'É', $nome);
+		$nome = str_replace('%C3%A1', 'á', $nome);
+		$nome = str_replace('%C3%AD', 'í', $nome);
+
 		$dados = array('nome'=>$nome,
 			'email'=>$email,
 			'senha'=>$senha,
@@ -112,6 +120,19 @@ class Welcome extends CI_Controller {
 		$dados = array('cidade'=>$cidade,
 			'disponibilidade'=>$disponibilidade);
 		$retornar = $this->login_model->buscar_disponibilidade_pesquisa($dados);
+
+		foreach ($retornar as $key => $value) {
+			 $dadosretorno = $this->login_model->contarEstrelas($value['id_usuario']);
+			 if(empty($dadosretorno)){
+			 	$retornar[$key]['estrelas'] = null;
+			 }else if ($dadosretorno['quantidade_votos'] > 1 ){
+			 	$estrelas = $dadosretorno['quantidade_estrelas']/$dadosretorno['quantidade_votos'];
+			 	$retornar[$key]['estrelas'] = $estrelas;
+			 }else {
+			 	$retornar[$key]['estrelas'] = $dadosretorno['quantidade_estrelas'];
+			 }
+		}
+		
 		echo json_encode($retornar);
 
 	}
@@ -152,6 +173,81 @@ class Welcome extends CI_Controller {
 		//$retornar = $this->login_model->buscar_dados($dados);
 		
 		echo json_encode($retornar);
+	}
+
+
+	public function ListarConversa($meu_id,$outro_id){
+		$dados = array('outro_id' =>$outro_id,
+			'meu_id' =>$meu_id);
+		$dados = $this->login_model->buscar_conversa($dados);
+
+
+		echo json_encode($dados,JSON_UNESCAPED_UNICODE);
+	}
+
+	public function EnviarConversa($meu_id,$outro_id,$mensagem){
+		$mensagem = str_replace('%20', ' ', $mensagem);
+		$mensagem = str_replace('%C3%A7', 'ç', $mensagem);
+		$mensagem = str_replace('%C3%A3', 'ã', $mensagem);
+		$mensagem = str_replace('%C3%A9', 'é', $mensagem);
+		$mensagem = str_replace('%C3%89', 'É', $mensagem);
+		$mensagem = str_replace('%C3%A1', 'á', $mensagem);
+		$mensagem = str_replace('%C3%AD', 'í', $mensagem);
+		$dadosEnviar = array('id_enviado' =>$outro_id,
+			'id_enviou' =>$meu_id,
+			'mensagem' =>$mensagem);
+		$dados = $this->login_model->enviar_conversa($dadosEnviar);
+		echo json_encode($dados,JSON_UNESCAPED_UNICODE);
+	}
+
+	public function deletarMensagem($id){
+		$dados = $this->login_model->deletar_mensagem_duplicada($id);
+		echo json_encode($dados,JSON_UNESCAPED_UNICODE);
+	}
+
+
+	public function ListarContatos($id){
+		$ids = $this->login_model->listarcontados($id);
+
+		if (!empty($ids)){
+			//print_r($dados);exit;
+			foreach ($ids as $key => $value) {
+				foreach ($value as $key2 => $value2) {
+					$dados[] = $value2;
+				}
+			}
+			$dados_pacientes = $this->login_model->buscardadoscontato($dados, $id);
+		}else {
+			$dados_pacientes = false;
+		}
+		
+		//print_r($dados_pacientes);exit;
+
+		echo json_encode($dados_pacientes,JSON_UNESCAPED_UNICODE);
+	}
+
+	public function editarAvaliacao($estrelas,$id_avaliacao){
+		$dados = array('estrelas'=>$estrelas,
+			'id'=>$id_avaliacao);
+		$retornar = $this->login_model->editarAvaliacao($dados);
+		
+		echo json_encode($retornar);
+	}
+
+	public function inserirAvaliacao($estrelas,$id_enviou, $id_recebeu){
+		$dados = array('estrelas'=>$estrelas,
+			'id_enviou'=> $id_enviou,
+			'id_recebeu'=> $id_recebeu);
+
+		$inserir = $this->login_model->verificar_avaliacao($dados);
+		if ($inserir == false){
+			$retornar = $this->login_model->inserirAvaliacao($dados);
+			$mensagem = true;
+		}else {
+			$mensagem = true;
+		}	
+		
+		echo json_encode($mensagem);
 	}
 
 
